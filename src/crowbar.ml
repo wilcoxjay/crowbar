@@ -260,6 +260,7 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
     if size <= 1 && (match gen.strategy with Unlazy _ -> false | _ -> true) then begin
         print_string "jrw: ";
         print_endline (stratname gen.strategy)
+        failwith "jrw"
       end;
   match gen.strategy with
   | Choose gens ->
