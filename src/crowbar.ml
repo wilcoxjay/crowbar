@@ -270,7 +270,7 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
       List.hd gen.small_examples, fun ppf () -> pp ppf "?"
     end
   else begin
-    if size <= 0 then
+    if size < 0 then
         failwith "jrw";
   match gen.strategy with
   | Choose gens ->
