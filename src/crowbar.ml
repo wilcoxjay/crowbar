@@ -254,16 +254,12 @@ let rec stratname : type a. a strat -> string =
 let rec generate : type a . int -> state -> a gen -> a * unit printer =
   fun size input gen ->
   Printf.printf "generate size = %d\n%!" size;
-  if size <= 1
-  then
-    if gen.small_examples <> []
-    then List.hd gen.small_examples, fun ppf () -> pp ppf "?"
-    else begin
-        print_endline "jrw";
-        print_endline (stratname gen.strategy);
-        failwith "jrw"
-      end
-  else
+  if size <= 1 && gen.small_examples <> []
+  then List.hd gen.small_examples, fun ppf () -> pp ppf "?"
+  else begin 
+      print_endline "jrw";
+      print_endline (stratname gen.strategy);
+      failwith "jrw";
   match gen.strategy with
   | Choose gens ->
      (* FIXME: better distribution? *)
@@ -317,6 +313,7 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
   | Print (ppv, gen) ->
      let v, _ = generate size input gen in
      v, fun ppf () -> ppv ppf v
+    end
 
 and generate_list : type a . int -> state -> a gen -> (a * unit printer) list =
   fun size input gen ->
