@@ -240,6 +240,7 @@ exception GenFailed of exn * Printexc.raw_backtrace * unit printer
 
 let rec generate : type a . int -> state -> a gen -> a * unit printer =
   fun size input gen ->
+  Printf.printf "generate size = %d\n%!" size;
   if size <= 1
   then
     if gen.small_examples <> []
@@ -305,6 +306,7 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
 
 and generate_list : type a . int -> state -> a gen -> (a * unit printer) list =
   fun size input gen ->
+  Printf.printf "generate_list size = %d\n%!" size;
   if size <= 1 then []
   else if read_bool input then
     generate_list1 size input gen
@@ -313,6 +315,7 @@ and generate_list : type a . int -> state -> a gen -> (a * unit printer) list =
 
 and generate_list1 : type a . int -> state -> a gen -> (a * unit printer) list =
   fun size input gen ->
+  Printf.printf "generate_list1 size = %d\n%!" size;
   let ans = generate (size/2) input gen in
   ans :: generate_list (size/2) input gen
 
@@ -321,11 +324,14 @@ and gen_apply :
        (k, res) gens -> k ->
        (res, exn * Printexc.raw_backtrace) result * unit printer =
   fun size state gens f ->
+  Printf.printf "gen_apply size = %d\n%!" size;
   let rec go :
     type k res . int -> state ->
        (k, res) gens -> k ->
        (res, exn * Printexc.raw_backtrace) result * unit printer list =
-      fun size input gens -> match gens with
+      fun size input gens -> 
+      Printf.printf "gen_apply.go size = %d\n%!" size;
+      match gens with
       | [] -> fun x -> Ok x, []
       | g :: gs -> fun f ->
         let v, pv = generate size input g in
