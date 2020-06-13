@@ -238,18 +238,27 @@ let shuffle l = map [shuffle_arr (Array.of_list l)] Array.to_list
 
 exception GenFailed of exn * Printexc.raw_backtrace * unit printer
 
-let stratname : type a. a strat -> string =
+let rec stratname : type a. a strat -> string =
   fun strat ->
   match strat with
-  | Choose _ -> "choose"
-  | Map _ -> "map"
-  | Bind _ -> "bind"
-  | Option _ -> "option"
-  | List _ -> "list"
-  | List1 _ -> "list1"
+  | Choose genlist -> Printf.sprintf "choose [%s]" (String.concat "; " (List.map (fun gen -> stratname (gen.strategy)) genlist))
+  | Map (gens, _) -> Printf.sprintf "map [%s] ?" (String.concat "; " (gens_names gens))
+  | Bind (g, _) -> Printf.sprintf "bind (%s) ?" (stratname g.strategy)
+  | Option g -> Printf.sprintf "option (%s)" (stratname g.strategy)
+  | List g -> Printf.sprintf "list (%s)" (stratname g.strategy)
+  | List1 g -> Printf.sprintf "list1 (%s)" (stratname g.strategy)
   | Primitive _ -> "primitive"
   | Unlazy _ -> "unlazy"
-  | Print _ -> "print"
+  | Print (_, g) -> Printf.sprintf "print (%s)" (stratname g.strategy)
+and gens_names : type k res. (k, res) gens -> string list = fun gens ->
+    match gens with
+    | [] -> []
+    | g :: gs -> stratname g.strategy :: gens_names gs
+
+let rec gens_lengths: type k res. (k, res) gens -> int list = fun gens ->
+  match gens with
+  | [] -> []
+  | g :: gs -> List.length g.small_examples :: gens_lengths gs
 
 let rec generate : type a . int -> state -> a gen -> a * unit printer =
   fun size input gen ->
@@ -342,20 +351,10 @@ and gen_apply :
        (k, res) gens -> k ->
        (res, exn * Printexc.raw_backtrace) result * unit printer =
   fun size state gens f ->
-  let rec names : type k res. (k, res) gens -> string list = fun gens ->
-    match gens with
-    | [] -> []
-    | g :: gs -> stratname g.strategy :: names gs
-  in
-  let rec lengths: type k res. (k, res) gens -> int list = fun gens ->
-    match gens with
-    | [] -> []
-    | g :: gs -> List.length g.small_examples :: lengths gs
-  in
   Printf.printf "generate_apply size = %d strats = [%s] n_small = [%s]\n%!"
     size
-    (String.concat "; " (names gens))
-    (String.concat "; " (List.map string_of_int (lengths gens)));
+    (String.concat "; " (gens_names gens))
+    (String.concat "; " (List.map string_of_int (gens_lengths gens)));
   let rec go :
     type k res . int -> state ->
        (k, res) gens -> k ->
