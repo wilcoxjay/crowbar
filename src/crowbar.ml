@@ -238,8 +238,9 @@ let shuffle l = map [shuffle_arr (Array.of_list l)] Array.to_list
 
 exception GenFailed of exn * Printexc.raw_backtrace * unit printer
 
-let rec genname gen =
-  match gen with
+let rec stratname : type a. a strat -> string =
+  fun strat ->
+  match strat with
   | Choose _ -> "choose"
   | Map _ -> "map"
   | Bind _ -> "bind"
@@ -259,7 +260,7 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
     then List.hd gen.small_examples, fun ppf () -> pp ppf "?"
     else begin
         print_endline "jrw";
-        print_endline (genname gen);
+        print_endline (stratname strat);
         failwith "jrw"
       end
   else
