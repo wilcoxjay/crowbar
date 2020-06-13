@@ -258,8 +258,7 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
   then List.hd gen.small_examples, fun ppf () -> pp ppf "?"
   else begin 
       print_endline "jrw";
-      print_endline (stratname gen.strategy);
-      failwith "jrw";
+      print_endline (stratname gen.strategy)
   match gen.strategy with
   | Choose gens ->
      (* FIXME: better distribution? *)
