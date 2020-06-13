@@ -238,6 +238,18 @@ let shuffle l = map [shuffle_arr (Array.of_list l)] Array.to_list
 
 exception GenFailed of exn * Printexc.raw_backtrace * unit printer
 
+let rec genname gen =
+  match gen with
+  | Choose _ -> "choose"
+  | Map _ -> "map"
+  | Bind _ -> "bind"
+  | Option _ -> "option"
+  | List _ -> "list"
+  | List1 _ -> "list1"
+  | Primitive _ -> "primitive"
+  | Unlazy _ -> "unlazy"
+  | Print _ -> "print"
+
 let rec generate : type a . int -> state -> a gen -> a * unit printer =
   fun size input gen ->
   Printf.printf "generate size = %d\n%!" size;
@@ -247,6 +259,7 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
     then List.hd gen.small_examples, fun ppf () -> pp ppf "?"
     else begin
         print_endline "jrw";
+        print_endline (genname gen);
         failwith "jrw"
       end
   else
