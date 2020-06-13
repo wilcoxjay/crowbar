@@ -253,7 +253,7 @@ let rec stratname : type a. a strat -> string =
 
 let rec generate : type a . int -> state -> a gen -> a * unit printer =
   fun size input gen ->
-  Printf.printf "generate size = %d\n%!" size;
+  Printf.printf "generate size = %d strat = %s\n%!" size (stratname gen.strategy);
   if size <= 1 && gen.small_examples <> []
   then begin
       print_string "successfully grabbing a small example from ";
