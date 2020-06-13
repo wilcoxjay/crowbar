@@ -255,7 +255,11 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
   fun size input gen ->
   Printf.printf "generate size = %d\n%!" size;
   if size <= 1 && gen.small_examples <> []
-  then List.hd gen.small_examples, fun ppf () -> pp ppf "?"
+  then begin
+      print_string "successfully grabbing a small example from ";
+      print_endline (stratname gen.strategy);
+      List.hd gen.small_examples, fun ppf () -> pp ppf "?"
+    end
   else begin
     if size <= 1 && (match gen.strategy with Unlazy _ -> false | _ -> true) then begin
         print_string "jrw: ";
