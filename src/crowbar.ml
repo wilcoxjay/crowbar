@@ -315,7 +315,6 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
   | Print (ppv, gen) ->
      let v, _ = generate size input gen in
      v, fun ppf () -> ppv ppf v
-    end
 
 and generate_list : type a . int -> state -> a gen -> (a * unit printer) list =
   fun size input gen ->
