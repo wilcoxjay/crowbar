@@ -577,6 +577,9 @@ let infinity =
 let crowbar_info = Cmdliner.Term.info @@ Filename.basename Sys.argv.(0)
 
 let () =
+  print_endline "testy test"
+
+let () =
   at_exit (fun () ->
       let t = !registered_tests in
       registered_tests := [];
