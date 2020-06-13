@@ -270,11 +270,8 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
       List.hd gen.small_examples, fun ppf () -> pp ppf "?"
     end
   else begin
-    if size <= 1 && (match gen.strategy with Unlazy _ -> false | _ -> true) then begin
-        print_string "jrw: ";
-        print_endline (stratname gen.strategy);
-        failwith "jrw"
-      end;
+    if size <= 0 then
+        failwith "jrw";
   match gen.strategy with
   | Choose gens ->
      (* FIXME: better distribution? *)
@@ -306,8 +303,10 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
      let a, pv = generate (size - 1) input (f index) in
      a, (fun ppf () -> pp ppf "(%a) => %a" pv_index () pv ())
   | Option gen ->
-     if size < 1 then
-       None, fun ppf () -> pp ppf "None"
+     if size < 1 then begin
+         failwith "option small: impossible"
+         (* None, fun ppf () -> pp ppf "None" *)
+       end
      else if read_bool input then
        let v, pv = generate size input gen in
        Some v, fun ppf () -> pp ppf "Some (%a)" pv ()
