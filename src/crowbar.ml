@@ -37,6 +37,7 @@ let fix f =
   unlazy lazygen
 
 let map (type f) (type a) (gens : (f, a) gens) (f : f) =
+(* 
   let rec smalls: type f a. (f, a) gens -> f -> a list = fun gens f ->
     match gens with
     | [] -> [f]
@@ -45,7 +46,8 @@ let map (type f) (type a) (gens : (f, a) gens) (f : f) =
        | [] -> []
        | x :: _ -> smalls gs (f x)
   in 
-  { strategy = Map (gens, f); small_examples = smalls gens f }
+ *)
+  { strategy = Map (gens, f); small_examples = (* smalls gens f *) match gens with [] -> [f] | _ -> [] }
 
 let dynamic_bind m f = {strategy = Bind(m, f); small_examples = [] }
 
