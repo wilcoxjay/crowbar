@@ -260,8 +260,7 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
     if size <= 1 then begin
         print_endline "jrw";
         print_endline (stratname gen.strategy)
-      end
-    else
+      end;
   match gen.strategy with
   | Choose gens ->
      (* FIXME: better distribution? *)
