@@ -238,7 +238,7 @@ let shuffle l = map [shuffle_arr (Array.of_list l)] Array.to_list
 
 exception GenFailed of exn * Printexc.raw_backtrace * unit printer
 
-let rec stratname : type a. a strat -> string =
+let stratname : type a. a strat -> string =
   fun strat ->
   match strat with
   | Choose _ -> "choose"
@@ -323,7 +323,7 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
 
 and generate_list : type a . int -> state -> a gen -> (a * unit printer) list =
   fun size input gen ->
-  Printf.printf "generate_list size = %d\n%!" size;
+  Printf.printf "generate_list size = %d strat = %s n_small = %d\n%!" size (stratname gen.strategy) (List.length gen.small_examples);
   if size <= 1 then []
   else if read_bool input then
     generate_list1 size input gen
@@ -332,7 +332,8 @@ and generate_list : type a . int -> state -> a gen -> (a * unit printer) list =
 
 and generate_list1 : type a . int -> state -> a gen -> (a * unit printer) list =
   fun size input gen ->
-  Printf.printf "generate_list1 size = %d\n%!" size;
+  Printf.printf "generate_list1 size = %d strat = %s n_small = %d\n%!" size (stratname gen.strategy) (List.length gen.small_examples);
+
   let ans = generate (size/2) input gen in
   ans :: generate_list (size/2) input gen
 
@@ -341,7 +342,20 @@ and gen_apply :
        (k, res) gens -> k ->
        (res, exn * Printexc.raw_backtrace) result * unit printer =
   fun size state gens f ->
-  Printf.printf "gen_apply size = %d\n%!" size;
+  let rec names : type k res. (k, res) gens -> string list = fun gens ->
+    match gens with
+    | [] -> []
+    | g :: gs -> stratname g.strategy :: names gs
+  in
+  let rec lengths: type k res. (k, res) gens -> int list = fun gens ->
+    match gens with
+    | [] -> []
+    | g :: gs -> List.length g.small_examples :: lengths gs
+  in
+  Printf.printf "generate_apply size = %d strats = [%s] n_small = [%s]\n%!"
+    size
+    (String.concat "; " (names gens))
+    (String.concat "; " (List.map string_of_int (lengths gens)));
   let rec go :
     type k res . int -> state ->
        (k, res) gens -> k ->
