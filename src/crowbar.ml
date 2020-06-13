@@ -256,9 +256,12 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
   Printf.printf "generate size = %d\n%!" size;
   if size <= 1 && gen.small_examples <> []
   then List.hd gen.small_examples, fun ppf () -> pp ppf "?"
-  else begin 
-      print_endline "jrw";
-      print_endline (stratname gen.strategy);
+  else
+    if size <= 1 then begin
+        print_endline "jrw";
+        print_endline (stratname gen.strategy)
+      end
+    else
   match gen.strategy with
   | Choose gens ->
      (* FIXME: better distribution? *)
