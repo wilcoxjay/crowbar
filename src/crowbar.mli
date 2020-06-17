@@ -182,6 +182,9 @@ val dynamic_bind : 'a gen -> ('a -> 'b gen) -> 'b gen
    combinators that suffice for your needs.
 *)
 
+val sized : int -> 'a gen -> 'a gen
+
+
 (** {1:printing Printing } *)
 
 (* Format.fprintf, renamed *)
