@@ -404,9 +404,9 @@ let check = function
   | true -> ()
   | false -> raise (FailedTest (fun ppf () -> pp ppf "check false"))
 
-let check_pred ~pp:pv ~pred_name pred x =
-  if not (pred x)
-  then raise (FailedTest (fun ppf () -> pp ppf "@[<hv>predicate %s failed on@ %a@ @]" pred_name pv x))
+let check_pred ~pred_name ~msg b =
+  if not b
+  then raise (FailedTest (fun ppf () -> pp ppf "predicate %s failed: %s" pred_name msg))
 
 let check_eq ?pp:pv ?cmp ?eq a b =
   let pass = match eq, cmp with
