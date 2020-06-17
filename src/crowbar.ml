@@ -435,7 +435,7 @@ type test_status =
   | TestFail of unit printer * unit printer
 
 let run_once (gens : (_, unit) gens) f state =
-  match gen_apply 5 state gens f with
+  match gen_apply 100 state gens f with
   | Ok (), pvs -> TestPass pvs
   | Error (FailedTest p, _), pvs -> TestFail (p, pvs)
   | Error (e, bt), pvs -> TestExn (e, bt, pvs)
