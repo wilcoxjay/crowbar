@@ -406,7 +406,7 @@ let check = function
 
 let check_pred ~pp ~f_name f a =
   if not (f a)
-  then raise (FailedTest (fun ppf () -> pp ppf "@[<hv>%s@ failed on %a@ @]" f_name pv a))
+  then raise (FailedTest (fun ppf () -> pp ppf "@[<hv>%s@ failed on %a@ @]" f_name pp a))
 
 let check_eq ?pp:pv ?cmp ?eq a b =
   let pass = match eq, cmp with
