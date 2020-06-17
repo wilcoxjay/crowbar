@@ -30,6 +30,9 @@ and ('k, 'res) gens =
 
 type nonrec +'a list = 'a list = [] | (::) of 'a * 'a list
 
+exception BadTest of string
+exception FailedTest of unit printer
+
 let unlazy f = { strategy = Unlazy f; small_examples = [] }
 
 let fix f =
@@ -41,7 +44,11 @@ let map (type f) (type a) (gens : (f, a) gens) (f : f) =
     match gens with
     | [] -> [f]
     | g :: gs ->
-       List.concat_map (fun x -> smalls gs (f x)) g.small_examples
+       List.concat_map (fun x ->
+           match f x with
+           | exception (BadTest _) -> []
+           | v -> smalls gs v)
+         g.small_examples
   in 
   { strategy = Map (gens, f); small_examples = smalls gens f }
 
@@ -91,8 +98,6 @@ let pp_option pv ppf = function
   | Some x ->
       Format.fprintf ppf "(Some %a)" pv x
 
-exception BadTest of string
-exception FailedTest of unit printer
 let guard = function
   | true -> ()
   | false -> raise (BadTest "guard failed")
