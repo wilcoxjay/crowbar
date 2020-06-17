@@ -19,6 +19,7 @@ type 'a strat =
   | Unlazy of 'a gen Lazy.t
   | Primitive of (state -> 'a)
   | Print of 'a printer * 'a gen
+  | Sized of int * 'a gen
 
 and 'a gen =
   { strategy: 'a strat;
@@ -60,6 +61,7 @@ let option gen = { strategy = Option gen; small_examples = [None] @ List.map (fu
 let list gen = { strategy = List gen; small_examples = [[]] }
 let list1 gen = { strategy = List1 gen; small_examples = List.map (fun x -> [x]) gen.small_examples }
 let primitive f exs = { strategy = Primitive f; small_examples = exs }
+let sized n gen = { strategy = Sized (n, gen); small_examples = gen.small_examples }
 
 let pair gena genb =
   map (gena :: genb :: []) (fun a b -> (a, b))
@@ -268,6 +270,7 @@ let rec stratname : type a. a strat -> string =
   | Primitive _ -> "primitive"
   | Unlazy _ -> "unlazy"
   | Print (_, g) -> Printf.sprintf "print (%s)" (stratname g.strategy)
+  | Sized (n, g) -> Printf.sprintf "sized %d (%s)" n (stratname g.strategy)
 and gens_names : type k res. (k, res) gens -> string list = fun gens ->
     match gens with
     | [] -> []
@@ -280,11 +283,11 @@ let rec gens_lengths: type k res. (k, res) gens -> int list = fun gens ->
 
 let rec generate : type a . int -> state -> a gen -> a * unit printer =
   fun size input gen ->
-  Printf.printf "generate size = %d strat = %s n_small = %d\n%!" size (stratname gen.strategy) (List.length gen.small_examples);
+  (* Printf.printf "generate size = %d strat = %s n_small = %d\n%!" size (stratname gen.strategy) (List.length gen.small_examples); *)
   if size <= 1 && gen.small_examples <> []
   then begin
-      print_string "successfully grabbing a small example from ";
-      print_endline (stratname gen.strategy);
+      (* print_string "successfully grabbing a small example from ";
+      print_endline (stratname gen.strategy); *)
       let n = choose_int (List.length gen.small_examples) input in
       List.nth gen.small_examples n, fun ppf () -> pp ppf "?"
     end
@@ -301,18 +304,7 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
   | Map ([], k) ->
      k, fun ppf () -> pp ppf "?"
   | Map (gens, f) ->
-     let rec len : type k res . int -> (k, res) gens -> int =
-       fun acc xs -> match xs with
-       | [] -> acc
-       | _ :: xs -> len (1 + acc) xs in
-     let n = len 0 gens in
-     (* the size parameter is (apparently?) meant to ensure that generation
-        eventually terminates, by limiting the set of options from which the
-        generator might choose once we've gotten deep into a tree.  make sure we
-        always mark our passing, even when we've mapped one value into another,
-        so we don't blow the stack. *)
-     let size = (size - 1) / n in
-     let v, pvs = gen_apply size input gens f in
+     let v, pvs = gen_apply (size - 1) input gens f in
      begin match v with
        | Ok v -> v, pvs
        | Error (e, bt) -> raise (GenFailed (e, bt, pvs))
@@ -346,11 +338,13 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
   | Print (ppv, gen) ->
      let v, _ = generate size input gen in
      v, fun ppf () -> ppv ppf v
+  | Sized (n, gen) ->
+     generate n input gen
     end
 
 and generate_list : type a . int -> state -> a gen -> (a * unit printer) list =
   fun size input gen ->
-  Printf.printf "generate_list size = %d strat = %s n_small = %d\n%!" size (stratname gen.strategy) (List.length gen.small_examples);
+  (* Printf.printf "generate_list size = %d strat = %s n_small = %d\n%!" size (stratname gen.strategy) (List.length gen.small_examples); *)
   if size <= 1 then []
   else if read_bool input then
     generate_list1 size input gen
@@ -359,7 +353,7 @@ and generate_list : type a . int -> state -> a gen -> (a * unit printer) list =
 
 and generate_list1 : type a . int -> state -> a gen -> (a * unit printer) list =
   fun size input gen ->
-  Printf.printf "generate_list1 size = %d strat = %s n_small = %d\n%!" size (stratname gen.strategy) (List.length gen.small_examples);
+  (* Printf.printf "generate_list1 size = %d strat = %s n_small = %d\n%!" size (stratname gen.strategy) (List.length gen.small_examples); *)
 
   let ans = generate (size/2) input gen in
   ans :: generate_list (size/2) input gen
@@ -369,16 +363,17 @@ and gen_apply :
        (k, res) gens -> k ->
        (res, exn * Printexc.raw_backtrace) result * unit printer =
   fun size state gens f ->
+  (* 
   Printf.printf "generate_apply size = %d strats = [%s] n_small = [%s]\n%!"
     size
     (String.concat "; " (gens_names gens))
-    (String.concat "; " (List.map string_of_int (gens_lengths gens)));
+    (String.concat "; " (List.map string_of_int (gens_lengths gens))); *)
   let rec go :
     type k res . int -> state ->
        (k, res) gens -> k ->
        (res, exn * Printexc.raw_backtrace) result * unit printer list =
       fun size input gens -> 
-      Printf.printf "gen_apply.go size = %d\n%!" size;
+      (* Printf.printf "gen_apply.go size = %d\n%!" size; *)
       match gens with
       | [] -> fun x -> Ok x, []
       | g :: gs -> fun f ->
@@ -435,7 +430,7 @@ type test_status =
   | TestFail of unit printer * unit printer
 
 let run_once (gens : (_, unit) gens) f state =
-  match gen_apply 100 state gens f with
+  match gen_apply 20 state gens f with
   | Ok (), pvs -> TestPass pvs
   | Error (FailedTest p, _), pvs -> TestFail (p, pvs)
   | Error (e, bt), pvs -> TestExn (e, bt, pvs)
