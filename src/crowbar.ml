@@ -406,7 +406,7 @@ let check = function
 
 let check_pred ~pred_name ~msg b =
   if not b
-  then raise (FailedTest (fun ppf () -> pp ppf "predicate %s failed: %s" pred_name msg))
+  then raise (FailedTest (fun ppf () -> pp ppf "predicate %s failed: %s" pred_name (msg ())))
 
 let check_eq ?pp:pv ?cmp ?eq a b =
   let pass = match eq, cmp with
