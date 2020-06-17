@@ -41,20 +41,18 @@ let map (type f) (type a) (gens : (f, a) gens) (f : f) =
     match gens with
     | [] -> [f]
     | g :: gs ->
-       match g.small_examples with
-       | [] -> []
-       | x :: _ -> smalls gs (f x)
+       List.concat_map (fun x -> smalls gs (f x)) g.small_examples
   in 
-  { strategy = Map (gens, f); small_examples = smalls gens f (* match gens with [] -> [f] | _ -> [] *) }
+  { strategy = Map (gens, f); small_examples = smalls gens f }
 
 let dynamic_bind m f = {strategy = Bind(m, f); small_examples = [] }
 
 let const x = map [] x
 let choose gens = { strategy = Choose gens; small_examples = List.concat_map (fun x -> x.small_examples) gens }
-let option gen = { strategy = Option gen; small_examples = [None] }
+let option gen = { strategy = Option gen; small_examples = [None] @ List.map (fun x -> Some x) gen.small_examples }
 let list gen = { strategy = List gen; small_examples = [[]] }
 let list1 gen = { strategy = List1 gen; small_examples = List.map (fun x -> [x]) gen.small_examples }
-let primitive f ex = { strategy = Primitive f; small_examples = [ex] }
+let primitive f exs = { strategy = Primitive f; small_examples = ex }
 
 let pair gena genb =
   map (gena :: genb :: []) (fun a b -> (a, b))
@@ -146,7 +144,7 @@ let read_bool src =
   let n = read_byte src in
   n land 1 = 1
 
-let bool = with_printer pp_bool (primitive read_bool false)
+let bool = with_printer pp_bool (primitive read_bool [false; true])
 
 let uint8 = with_printer pp_int (primitive read_byte 0)
 let int8 = with_printer pp_int (map [uint8] (fun n -> n - 128))
