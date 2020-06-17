@@ -41,7 +41,6 @@ let fix f =
   unlazy lazygen
 
 let map (type f) (type a) (gens : (f, a) gens) (f : f) =
-(* 
   let rec smalls: type f a. (f, a) gens -> f -> a list = fun gens f ->
     match gens with
     | [] -> [f]
@@ -52,8 +51,8 @@ let map (type f) (type a) (gens : (f, a) gens) (f : f) =
            | v -> smalls gs v)
          g.small_examples
   in 
- *)
-  { strategy = Map (gens, f); small_examples = (* smalls gens f *) match gens with [] -> [f] | _ -> []}
+
+  { strategy = Map (gens, f); small_examples = smalls gens f (* match gens with [] -> [f] | _ -> [] *)}
 
 let dynamic_bind m f = {strategy = Bind(m, f); small_examples = [] }
 
@@ -341,7 +340,7 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
      let v, _ = generate size input gen in
      v, fun ppf () -> ppv ppf v
   | Sized (n, gen) ->
-     generate n input gen
+     generate (Pervasives.min size n) input gen
     end
 
 and generate_list : type a . int -> state -> a gen -> (a * unit printer) list =
@@ -436,7 +435,7 @@ type test_status =
   | TestFail of unit printer * unit printer
 
 let run_once (gens : (_, unit) gens) f state =
-  match gen_apply 20 state gens f with
+  match gen_apply 5 state gens f with
   | Ok (), pvs -> TestPass pvs
   | Error (FailedTest p, _), pvs -> TestFail (p, pvs)
   | Error (e, bt), pvs -> TestExn (e, bt, pvs)
