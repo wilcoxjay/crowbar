@@ -283,7 +283,7 @@ let rec gens_lengths: type k res. (k, res) gens -> int list = fun gens ->
 
 let rec generate : type a . int -> state -> a gen -> a * unit printer =
   fun size input gen ->
-  Printf.printf "generate size = %d strat = %s n_small = %d\n%!" size (stratname gen.strategy) (List.length gen.small_examples); 
+  (* Printf.printf "generate size = %d strat = %s n_small = %d\n%!" size (stratname gen.strategy) (List.length gen.small_examples);  *)
   if size <= 1 && gen.small_examples <> []
   then begin
       (* print_string "successfully grabbing a small example from ";
