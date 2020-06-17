@@ -52,7 +52,7 @@ let choose gens = { strategy = Choose gens; small_examples = List.concat_map (fu
 let option gen = { strategy = Option gen; small_examples = [None] @ List.map (fun x -> Some x) gen.small_examples }
 let list gen = { strategy = List gen; small_examples = [[]] }
 let list1 gen = { strategy = List1 gen; small_examples = List.map (fun x -> [x]) gen.small_examples }
-let primitive f exs = { strategy = Primitive f; small_examples = ex }
+let primitive f exs = { strategy = Primitive f; small_examples = exs }
 
 let pair gena genb =
   map (gena :: genb :: []) (fun a b -> (a, b))
@@ -146,7 +146,7 @@ let read_bool src =
 
 let bool = with_printer pp_bool (primitive read_bool [false; true])
 
-let uint8 = with_printer pp_int (primitive read_byte 0)
+let uint8 = with_printer pp_int (primitive read_byte [0; 1])
 let int8 = with_printer pp_int (map [uint8] (fun n -> n - 128))
 
 let read_uint16 src =
@@ -157,19 +157,19 @@ let read_int16 src =
   let off = getbytes src 2 in
   EndianBytes.LittleEndian.get_int16 src.buf off
 
-let uint16 = with_printer pp_int (primitive read_uint16 0)
-let int16 = with_printer pp_int (primitive read_int16 0)
+let uint16 = with_printer pp_int (primitive read_uint16 [0; 1])
+let int16 = with_printer pp_int (primitive read_int16 [0; 1])
 
 let read_int32 src =
   let off = getbytes src 4 in
   EndianBytes.LittleEndian.get_int32 src.buf off
 
-let read_int64 src =
+let read_int64 src = 
   let off = getbytes src 8 in
   EndianBytes.LittleEndian.get_int64 src.buf off
 
-let int32 = with_printer pp_int32 (primitive read_int32 0l)
-let int64 = with_printer pp_int64 (primitive read_int64 0L)
+let int32 = with_printer pp_int32 (primitive read_int32 [0l; 1l])
+let int64 = with_printer pp_int64 (primitive read_int64 [0L; 1L])
 
 let int =
   with_printer pp_int
@@ -180,9 +180,9 @@ let int =
 
 let float = with_printer pp_float (primitive (fun src ->
   let off = getbytes src 8 in
-  EndianBytes.LittleEndian.get_double src.buf off) 0.)
+  EndianBytes.LittleEndian.get_double src.buf off) [0.])
 
-let char = with_printer pp_char (primitive read_char 'a')
+let char = with_printer pp_char (primitive read_char ['a'])
 
 (* maybe print as a hexdump? *)
 let bytes = with_printer pp_string (primitive (fun src ->
@@ -199,11 +199,11 @@ let bytes = with_printer pp_string (primitive (fun src ->
        Bytes.set buf p c;
        read_bytes (p + 1) in
   let count = read_bytes 0 in
-  Bytes.sub_string buf 0 count) "")
+  Bytes.sub_string buf 0 count) [""])
 
 let bytes_fixed n = with_printer pp_string (primitive (fun src ->
   let off = getbytes src n in
-  Bytes.sub_string src.buf off n) (String.make n 'a'))
+  Bytes.sub_string src.buf off n) [String.make n 'a'])
 
 let choose_int n state =
   assert (n > 0);
@@ -216,12 +216,19 @@ let choose_int n state =
   else
     Int64.(to_int (abs (rem (read_int64 state) (of_int n))))
 
+let list_range ?(min=0) n =
+  let rec go acc x n =
+    if n <= 0
+    then acc
+    else go (x :: acc) (x - 1) (n - 1)
+  in go [] (min + n - 1) n
+
 let range ?(min=0) n =
   if n <= 0 then
     raise (Invalid_argument "Crowbar.range: argument n must be positive");
   if min < 0 then
     raise (Invalid_argument "Crowbar.range: argument min must be positive or null");
-  with_printer pp_int (primitive (fun s -> min + choose_int n s) min)
+  with_printer pp_int (primitive (fun s -> min + choose_int n s) (list_range ~min (if n < 4 then n else 4)))
 
 let uchar : Uchar.t gen =
   map [range 0x110000] (fun x ->
@@ -273,7 +280,8 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
   then begin
       print_string "successfully grabbing a small example from ";
       print_endline (stratname gen.strategy);
-      List.hd gen.small_examples, fun ppf () -> pp ppf "?"
+      let n = choose_int (List.length gen.small_examples) input in
+      List.nth gen.small_examples n, fun ppf () -> pp ppf "?"
     end
   else begin
     if size < 0 then
