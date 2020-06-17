@@ -292,8 +292,8 @@ let rec generate : type a . int -> state -> a gen -> a * unit printer =
       List.nth gen.small_examples n, fun ppf () -> pp ppf "?"
     end
   else begin
-    if size < -10 then
-        failwith "jrw";
+    if size < 0 then
+      raise (BadTest "ran out of size and no small examples");
   match gen.strategy with
   | Choose gens ->
      (* FIXME: better distribution? *)
