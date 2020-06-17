@@ -237,6 +237,8 @@ val check : bool -> unit
 (** [check b] generates a test failure if [b] is false.  No useful information
     will be printed in this case. *)
 
+val check_pred : ~pp:('a printer) -> ~pred_name:string -> ('a -> bool) -> 'a -> unit
+
 val check_eq : ?pp:('a printer) -> ?cmp:('a -> 'a -> int) -> ?eq:('a -> 'a -> bool) ->
   'a -> 'a -> unit
 (** [check_eq pp cmp eq x y] evaluates whether x and y are equal, and if they
